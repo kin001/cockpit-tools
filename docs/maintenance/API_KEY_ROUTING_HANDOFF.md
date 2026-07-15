@@ -167,8 +167,19 @@ npm run test:codex-api-key-scope
 node --test src/utils/codexApiServiceCompatibility.test.ts
 ```
 
-The machine has no Go toolchain. Do not require a sidecar rebuild for local
-verification; use the existing Windows sidecar binary:
+Go `1.26.5` is available on the current maintenance machine. Verify both the
+Cockpit wrapper and the affected embedded CLIProxyAPI packages before a local
+release:
+
+```powershell
+Set-Location sidecars/cockpit-cliproxy
+go test ./...
+Set-Location cdk/CLIProxyAPI
+go test ./internal/watcher ./internal/runtime/executor ./sdk/api/handlers/openai
+Set-Location ../../../..
+```
+
+The retained Windows sidecar binary is located at:
 
 ```text
 sidecars/cockpit-cliproxy/bin/cockpit-cliproxy-x86_64-pc-windows-msvc.exe
@@ -181,13 +192,15 @@ release configuration unchanged and disable updater artifacts only for the
 local build by using the existing CI override:
 
 ```powershell
-$env:COCKPIT_SKIP_CLIPROXY_BUILD='1'
+Remove-Item Env:COCKPIT_SKIP_CLIPROXY_BUILD -ErrorAction SilentlyContinue
 npm run tauri -- build --config src-tauri/tauri.ci.conf.json
 ```
 
 `src-tauri/tauri.ci.conf.json` sets `bundle.createUpdaterArtifacts=false` and
-therefore avoids the updater-signing requirement. Confirm that the existing
-sidecar binary is present before packaging. This workspace uses the
+therefore avoids the updater-signing requirement. With Go available, do not
+skip the sidecar build after merging upstream sidecar source changes. Set
+`COCKPIT_SKIP_CLIPROXY_BUILD=1` only as an explicit recovery fallback when a
+known-compatible binary has already been verified. This workspace uses the
 repository-level Cargo target directory. Windows installers are written under:
 
 ```text
@@ -636,3 +649,106 @@ After the push, the local worktree was returned to
 `feature/api-key-routing-usage` at `667a390b`. The only remaining local
 modification is the pre-existing line-ending-only state of
 `src-tauri/Cargo.toml`; it was not included in the locale commit or patch.
+
+## v1.3.4 Sync and API Service Corrections
+
+Sync performed on 2026-07-15:
+
+- Pre-merge downstream HEAD: `2742e6b0`.
+- Official head: `466e3f6d`; release tag: `v1.3.4` at `2d8f0fc2`.
+- Official API Key routing merge: `9bb510d5` (PR #1470).
+- Backup branch:
+  `backup/pre-origin-main-1.3.4-sync-20260715-161817`.
+- External byte backup:
+  `%LOCALAPPDATA%\Temp\cockpit-tools-pre-1.3.4-20260715-161817`.
+- Superseded downstream Responses Lite source changes were retired in
+  `14041290` before the merge. The maintenance document and locale recovery
+  patch were retained.
+- Merge commit: `2c9c4c5b`. The merge completed without conflicts and kept the
+  local untracked `docs/prototypes/` directory outside version control.
+
+Two post-merge defects were corrected:
+
+1. API service speed changes now rely on CLIProxyAPI's config watcher. The
+   hot-reloadable `payload` defaults are excluded from the process-restart
+   fingerprint, so changing Standard/Fast affects new requests without killing
+   an in-flight stream. Port, bind address, account routing, and other process
+   configuration changes still trigger the existing restart path.
+2. Existing request-log databases now add the `service_tier` column in place
+   when opened with the current schema. Existing rows remain intact and receive
+   the empty default value.
+3. Quota-pool summaries now aggregate the real quota windows returned for each
+   account. A 10,080-minute primary window is displayed as weekly instead of
+   being hard-coded as `5h`. Legacy 5-hour plus weekly data remains supported,
+   as do missing metadata, exhausted 0% windows, and mixed old/new account
+   pools.
+
+Live state before installation confirmed that the saved API service speed is
+`fast` and the running sidecar config injects `service_tier=priority`. The
+existing 1.3.3 request database did not contain the `service_tier` column,
+which reproduced the migration defect without exposing request content or
+credentials.
+
+Focused verification before packaging:
+
+- `npm run typecheck`: passed.
+- Quota-pool regression file via temporary `tsx`: 6 passed.
+- Existing Codex quota test: 1 passed.
+- Existing API Key scope tests: 5 passed.
+- Current Rust API Key scope test: 1 passed.
+- Rust `codex_local_access` module: 179 passed.
+- New speed-fingerprint and log-schema migration tests: passed.
+- Cockpit Go sidecar wrapper: passed.
+- CLIProxyAPI watcher, Codex executor, and OpenAI Responses packages: passed.
+- The complete Rust library baseline ran 603 tests. Failures were confined to
+  unchanged `origin/main` files (`codex_account`, Windows SQLite cleanup, and
+  file timestamp tests); the relevant files and Cargo metadata have identical
+  Git object hashes to `origin/main`.
+- `cargo fmt --check` reports broad formatting differences already present in
+  `origin/main`; do not bulk-format unrelated source during this maintenance
+  release.
+
+Release build with a freshly rebuilt Go sidecar and
+`src-tauri/tauri.ci.conf.json` passed. Artifacts:
+
+```text
+target/release/bundle/nsis/Cockpit Tools_1.3.4_x64-setup.exe
+size: 27974121 bytes
+sha256: 2FA9C171C981D8D1B089B77E2D02559681D0FB75A7A1874681119C1644E235E8
+
+target/release/bundle/msi/Cockpit Tools_1.3.4_x64_en-US.msi
+size: 38150144 bytes
+sha256: 6188A7B42B693DC2720D0E7469C2CA4955CA5181A0936E1E50DD493D29B5C60F
+
+sidecars/cockpit-cliproxy/bin/cockpit-cliproxy-x86_64-pc-windows-msvc.exe
+size: 19347456 bytes
+sha256: FA319B0416BB690B4FD16A0DDDFC9D71CE3CCE7492A707A9C0D7D58EC81ECB9D
+```
+
+The pre-install program-directory backup is:
+
+```text
+target/install-backups/pre-1.3.4-sync-20260715-165950
+```
+
+It contains the same 100 files as the installed directory at backup time.
+Account data under `%USERPROFILE%\.antigravity_cockpit` is separate and is not
+replaced by the installer.
+
+### Deferred Usage Activity Design
+
+No activity-dashboard code is included in this release. The agreed discussion
+direction is:
+
+- Place the activity view at the top of the existing Codex API Service page,
+  not in a new product shell.
+- Add a compact selector to the daily Token activity heatmap for `all client
+  Keys` or one specific client Key.
+- Keep the Token trend to one total-Token series rather than simultaneous input,
+  output, and cached lines.
+- Preserve Key-level and account-level attribution in the data model so later
+  provider expansion is possible, but do not claim cross-provider support until
+  those providers expose comparable usage events.
+
+This deferred design must not be bundled into the fast-mode/quota-window bugfix
+commit or its pull request.
