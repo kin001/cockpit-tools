@@ -581,3 +581,58 @@ target/install-backups/pre-1.3.3-lite-fix-20260715-122735
 To roll back, exit Cockpit Tools and restore that directory to
 `%LOCALAPPDATA%\Cockpit Tools`, or reinstall the previously retained 1.3.2
 installer. User configuration and account data were not deleted or replaced.
+
+## PR #1577 Locale Check Repair
+
+On 2026-07-15, the first CI run for the Responses Lite compatibility PR failed
+before compilation. Build Matrix run `29389549341` failed in `Preflight` at
+`node scripts/check_locales.cjs`:
+
+- `en-US.json` was the 4,999-key baseline.
+- `en.json` and `zh-CN.json` contained five account-priority keys that were
+  absent from the baseline.
+- Fourteen other locale files were missing 17 API Service statistics and
+  account-scope keys.
+- No Rust, Go, or sidecar build failure was involved; all build jobs were
+  skipped after Preflight.
+
+The locale set was synchronized in commit `e32020a1` (`fix(i18n): sync API
+key routing locale keys`) on branch `fix/responses-lite-after-1470`. All 18
+locale files now contain 5,004 matching keys, including localized account
+scope, account priority, usage range, and calendar statistics labels. The
+commit was pushed to:
+
+```text
+fork/fix/responses-lite-after-1470
+https://github.com/jlcodes99/cockpit-tools/pull/1577
+```
+
+The recovery patch is archived at:
+
+```text
+docs/maintenance/patches/0001-fix-i18n-sync-API-key-routing-locale-keys.patch
+```
+
+To replay only this locale repair on the PR parent:
+
+```powershell
+git switch -c recover/responses-lite-locale 2622a3fc
+git am docs/maintenance/patches/0001-fix-i18n-sync-API-key-routing-locale-keys.patch
+```
+
+Verification for `e32020a1`:
+
+- `node scripts/check_locales.cjs`: passed; all 18 files match and no
+  blocking English-value reuse was reported.
+- `npm run typecheck`: passed.
+- `custom_api_key_scope_filters_duplicates_and_updates_manifest_scope`: 1
+  passed. The older similarly named command ran 0 tests and is not valid
+  regression evidence.
+- GitHub Actions Build Matrix run `29390209527`: Preflight and all six
+  platform builds passed.
+- GitHub Actions CodeQL run `29390209499`: passed.
+
+After the push, the local worktree was returned to
+`feature/api-key-routing-usage` at `667a390b`. The only remaining local
+modification is the pre-existing line-ending-only state of
+`src-tauri/Cargo.toml`; it was not included in the locale commit or patch.

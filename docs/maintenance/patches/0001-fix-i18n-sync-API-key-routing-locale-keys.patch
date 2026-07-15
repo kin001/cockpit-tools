@@ -1,0 +1,633 @@
+From e32020a1681a89ff08a7b49ffcd626de7c189135 Mon Sep 17 00:00:00 2001
+From: Chu <2331955642@qq.com>
+Date: Wed, 15 Jul 2026 12:56:55 +0800
+Subject: [PATCH] fix(i18n): sync API key routing locale keys
+
+---
+ src/locales/ar.json    | 23 +++++++++++++++++++++++
+ src/locales/cs.json    | 23 +++++++++++++++++++++++
+ src/locales/de.json    | 23 +++++++++++++++++++++++
+ src/locales/en-US.json |  5 +++++
+ src/locales/es.json    | 23 +++++++++++++++++++++++
+ src/locales/fr.json    | 23 +++++++++++++++++++++++
+ src/locales/id.json    | 23 +++++++++++++++++++++++
+ src/locales/it.json    | 23 +++++++++++++++++++++++
+ src/locales/ja.json    | 23 +++++++++++++++++++++++
+ src/locales/ko.json    | 23 +++++++++++++++++++++++
+ src/locales/pl.json    | 23 +++++++++++++++++++++++
+ src/locales/pt-br.json | 23 +++++++++++++++++++++++
+ src/locales/ru.json    | 23 +++++++++++++++++++++++
+ src/locales/tr.json    | 23 +++++++++++++++++++++++
+ src/locales/vi.json    | 23 +++++++++++++++++++++++
+ src/locales/zh-tw.json |  5 +++++
+ 16 files changed, 332 insertions(+)
+
+diff --git a/src/locales/ar.json b/src/locales/ar.json
+index 07d3dae6..e6d5d703 100644
+--- a/src/locales/ar.json
++++ b/src/locales/ar.json
+@@ -3247,6 +3247,11 @@
+         "models": "النماذج والقدرات",
+         "logs": "الإحصاءات والسجلات"
+       },
++      "statsRange": {
++        "today": "اليوم",
++        "thisWeek": "هذا الأسبوع",
++        "thisMonth": "هذا الشهر"
++      },
+       "healthTitle": "صحة الخدمة",
+       "compat": {
+         "title": "توافق البروتوكولات",
+@@ -3324,6 +3329,24 @@
+       "keys": {
+         "policyTitle": "سياسة النماذج",
+         "advancedPolicyTitle": "ميزة متقدمة: سياسة النماذج",
++        "accountScope": "نطاق تدوير الحسابات",
++        "accountScopeInherit": "اتباع مجموعة حسابات الخدمة تلقائيًا",
++        "accountScopeFixed": "هذا المفتاح مثبت على حسابه المرتبط ولا يمكنه وراثة مجموعة الخدمة",
++        "accountScopeSelected": "تم تحديد {{count}} من الحسابات",
++        "accountScopeInheritedCount": "مجموعة الحسابات: وراثة {{count}}",
++        "accountScopeUnavailable": "مجموعة الحسابات: لا توجد حسابات متاحة",
++        "accountScopeCount": "مجموعة الحسابات: {{selected}}/{{total}}",
++        "accountScopeRequired": "اختر حسابًا واحدًا على الأقل للمجموعة المخصصة",
++        "accountScopeModeInherit": "وراثة مجموعة الخدمة",
++        "accountScopeModeCustom": "مجموعة حسابات مخصصة",
++        "accountPrioritySet": "تثبيت الحساب للتوجيه حسب الأولوية",
++        "accountPriorityPromote": "نقل الحساب إلى أعلى أولوية",
++        "accountPriorityClear": "إزالة تثبيت أولوية الحساب",
++        "accountPrioritySaved": "تم تثبيت الحساب ذي الأولوية",
++        "accountPriorityCleared": "تمت إزالة تثبيت أولوية الحساب",
++        "usageRange": "فترة استخدام مفتاح API",
++        "unsaved": "غير محفوظ",
++        "resetPolicy": "تجاهل التغييرات",
+         "modelPrefix": "بادئة النموذج",
+         "modelPrefixPlaceholder": "مثال: codex",
+         "allowedModels": "النماذج المسموحة",
+diff --git a/src/locales/cs.json b/src/locales/cs.json
+index 731bc57e..6cd932bf 100644
+--- a/src/locales/cs.json
++++ b/src/locales/cs.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modely a schopnosti",
+         "logs": "Statistiky a protokoly"
+       },
++      "statsRange": {
++        "today": "Dnes",
++        "thisWeek": "Tento týden",
++        "thisMonth": "Tento měsíc"
++      },
+       "healthTitle": "Stav služby",
+       "compat": {
+         "title": "Kompatibilita protokolů",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Zásady modelů",
+         "advancedPolicyTitle": "Pokročilé: zásady modelů",
++        "accountScope": "Rozsah rotace účtů",
++        "accountScopeInherit": "Automaticky sledovat fond účtů služby",
++        "accountScopeFixed": "Tento Key je pevně spojen s účtem a nemůže dědit fond služby",
++        "accountScopeSelected": "Vybráno účtů: {{count}}",
++        "accountScopeInheritedCount": "Fond účtů: dědí se {{count}}",
++        "accountScopeUnavailable": "Fond účtů: nejsou dostupné žádné účty",
++        "accountScopeCount": "Fond účtů: {{selected}}/{{total}}",
++        "accountScopeRequired": "Pro vlastní fond vyberte alespoň jeden účet",
++        "accountScopeModeInherit": "Dědit fond služby",
++        "accountScopeModeCustom": "Vlastní fond účtů",
++        "accountPrioritySet": "Připnout účet pro směrování podle priority",
++        "accountPriorityPromote": "Přesunout účet na nejvyšší prioritu",
++        "accountPriorityClear": "Odepnout prioritní účet",
++        "accountPrioritySaved": "Prioritní účet připnut",
++        "accountPriorityCleared": "Připnutí prioritního účtu odstraněno",
++        "usageRange": "Období využití API klíče",
++        "unsaved": "Neuloženo",
++        "resetPolicy": "Zahodit změny",
+         "modelPrefix": "Předpona modelu",
+         "modelPrefixPlaceholder": "Příklad: codex",
+         "allowedModels": "Povolené modely",
+diff --git a/src/locales/de.json b/src/locales/de.json
+index 4e01fd14..c1b42aff 100644
+--- a/src/locales/de.json
++++ b/src/locales/de.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modelle & Fähigkeiten",
+         "logs": "Statistik & Protokolle"
+       },
++      "statsRange": {
++        "today": "Heute",
++        "thisWeek": "Diese Woche",
++        "thisMonth": "Diesen Monat"
++      },
+       "healthTitle": "Dienstzustand",
+       "compat": {
+         "title": "Protokollkompat.",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Modellrichtlinie",
+         "advancedPolicyTitle": "Erweitert: Modellrichtlinie",
++        "accountScope": "Konten-Rotationsbereich",
++        "accountScopeInherit": "Dem Dienst-Kontopool automatisch folgen",
++        "accountScopeFixed": "Dieser Key ist an sein Konto gebunden und kann den Dienst-Pool nicht erben",
++        "accountScopeSelected": "{{count}} Konten ausgewählt",
++        "accountScopeInheritedCount": "Kontopool: {{count}} geerbt",
++        "accountScopeUnavailable": "Kontopool: keine verfügbaren Konten",
++        "accountScopeCount": "Kontopool: {{selected}}/{{total}}",
++        "accountScopeRequired": "Wählen Sie mindestens ein Konto für einen benutzerdefinierten Pool",
++        "accountScopeModeInherit": "Dienst-Pool übernehmen",
++        "accountScopeModeCustom": "Benutzerdefinierter Kontopool",
++        "accountPrioritySet": "Konto für priorisiertes Routing anheften",
++        "accountPriorityPromote": "Konto an die höchste Priorität verschieben",
++        "accountPriorityClear": "Prioritätsmarkierung des Kontos entfernen",
++        "accountPrioritySaved": "Prioritätskonto angeheftet",
++        "accountPriorityCleared": "Prioritätsmarkierung des Kontos entfernt",
++        "usageRange": "API-Key-Nutzungszeitraum",
++        "unsaved": "Nicht gespeichert",
++        "resetPolicy": "Änderungen verwerfen",
+         "modelPrefix": "Modellpräfix",
+         "modelPrefixPlaceholder": "Beispiel: codex",
+         "allowedModels": "Erlaubte Modelle",
+diff --git a/src/locales/en-US.json b/src/locales/en-US.json
+index e2dcc58b..980b3a7f 100644
+--- a/src/locales/en-US.json
++++ b/src/locales/en-US.json
+@@ -3515,6 +3515,11 @@
+         "accountScopeRequired": "Select at least one account for a custom pool",
+         "accountScopeModeInherit": "Inherit Service Pool",
+         "accountScopeModeCustom": "Custom Account Pool",
++        "accountPrioritySet": "Pin account for priority routing",
++        "accountPriorityPromote": "Move account to highest priority",
++        "accountPriorityClear": "Remove priority account pin",
++        "accountPrioritySaved": "Priority account pinned",
++        "accountPriorityCleared": "Priority account pin removed",
+         "usageRange": "API key usage period",
+         "unsaved": "Unsaved",
+         "resetPolicy": "Discard Changes",
+diff --git a/src/locales/es.json b/src/locales/es.json
+index 157bf65a..3f169fa7 100644
+--- a/src/locales/es.json
++++ b/src/locales/es.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modelos y capacidades",
+         "logs": "Estadísticas y registros"
+       },
++      "statsRange": {
++        "today": "Hoy",
++        "thisWeek": "Esta semana",
++        "thisMonth": "Este mes"
++      },
+       "healthTitle": "Estado del servicio",
+       "compat": {
+         "title": "Compat. de protocolos",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Política de modelos",
+         "advancedPolicyTitle": "Avanzado: política de modelos",
++        "accountScope": "Ámbito de rotación de cuentas",
++        "accountScopeInherit": "Seguir automáticamente el grupo de cuentas del servicio",
++        "accountScopeFixed": "Este Key está fijado a su cuenta vinculada y no puede heredar el grupo del servicio",
++        "accountScopeSelected": "{{count}} cuentas seleccionadas",
++        "accountScopeInheritedCount": "Grupo de cuentas: heredando {{count}}",
++        "accountScopeUnavailable": "Grupo de cuentas: no hay cuentas disponibles",
++        "accountScopeCount": "Grupo de cuentas: {{selected}}/{{total}}",
++        "accountScopeRequired": "Selecciona al menos una cuenta para un grupo personalizado",
++        "accountScopeModeInherit": "Usar grupo del servicio",
++        "accountScopeModeCustom": "Grupo de cuentas personalizado",
++        "accountPrioritySet": "Fijar cuenta para el enrutamiento prioritario",
++        "accountPriorityPromote": "Mover cuenta a la prioridad máxima",
++        "accountPriorityClear": "Quitar fijación de la cuenta prioritaria",
++        "accountPrioritySaved": "Cuenta prioritaria fijada",
++        "accountPriorityCleared": "Fijación de cuenta prioritaria quitada",
++        "usageRange": "Periodo de uso de la clave API",
++        "unsaved": "Sin guardar",
++        "resetPolicy": "Descartar cambios",
+         "modelPrefix": "Prefijo de modelo",
+         "modelPrefixPlaceholder": "Ejemplo: codex",
+         "allowedModels": "Modelos permitidos",
+diff --git a/src/locales/fr.json b/src/locales/fr.json
+index 244de3f3..0fd2fbcc 100644
+--- a/src/locales/fr.json
++++ b/src/locales/fr.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modèles et capacités",
+         "logs": "Stats et journaux"
+       },
++      "statsRange": {
++        "today": "Aujourd’hui",
++        "thisWeek": "Cette semaine",
++        "thisMonth": "Ce mois-ci"
++      },
+       "healthTitle": "Santé du service",
+       "compat": {
+         "title": "Compat. protocoles",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Politique de modèles",
+         "advancedPolicyTitle": "Avancé : stratégie de modèles",
++        "accountScope": "Portée de rotation des comptes",
++        "accountScopeInherit": "Suivre automatiquement le pool de comptes du service",
++        "accountScopeFixed": "Cette clé est liée à son compte et ne peut pas hériter du pool du service",
++        "accountScopeSelected": "{{count}} comptes sélectionnés",
++        "accountScopeInheritedCount": "Pool de comptes : héritage de {{count}}",
++        "accountScopeUnavailable": "Pool de comptes : aucun compte disponible",
++        "accountScopeCount": "Pool de comptes : {{selected}}/{{total}}",
++        "accountScopeRequired": "Sélectionnez au moins un compte pour un pool personnalisé",
++        "accountScopeModeInherit": "Hériter du pool du service",
++        "accountScopeModeCustom": "Pool de comptes personnalisé",
++        "accountPrioritySet": "Épingler le compte pour le routage prioritaire",
++        "accountPriorityPromote": "Déplacer le compte vers la priorité maximale",
++        "accountPriorityClear": "Retirer l’épingle du compte prioritaire",
++        "accountPrioritySaved": "Compte prioritaire épinglé",
++        "accountPriorityCleared": "Épingle du compte prioritaire retirée",
++        "usageRange": "Période d’utilisation de la clé API",
++        "unsaved": "Non enregistré",
++        "resetPolicy": "Annuler les modifications",
+         "modelPrefix": "Préfixe modèle",
+         "modelPrefixPlaceholder": "Exemple : codex",
+         "allowedModels": "Modèles autorisés",
+diff --git a/src/locales/id.json b/src/locales/id.json
+index 44f43d7a..f1c727f5 100644
+--- a/src/locales/id.json
++++ b/src/locales/id.json
+@@ -3247,6 +3247,11 @@
+         "models": "Model dan kemampuan",
+         "logs": "Statistik dan log"
+       },
++      "statsRange": {
++        "today": "Hari ini",
++        "thisWeek": "Minggu ini",
++        "thisMonth": "Bulan ini"
++      },
+       "healthTitle": "Kesehatan layanan",
+       "compat": {
+         "title": "Kompatibilitas Protokol",
+@@ -3324,6 +3329,24 @@
+       "keys": {
+         "policyTitle": "Kebijakan Model",
+         "advancedPolicyTitle": "Lanjutan: Kebijakan Model",
++        "accountScope": "Ruang rotasi akun",
++        "accountScopeInherit": "Ikuti kumpulan akun layanan secara otomatis",
++        "accountScopeFixed": "Key ini terikat pada akunnya dan tidak dapat mewarisi kumpulan layanan",
++        "accountScopeSelected": "{{count}} akun dipilih",
++        "accountScopeInheritedCount": "Kumpulan akun: mewarisi {{count}}",
++        "accountScopeUnavailable": "Kumpulan akun: tidak ada akun tersedia",
++        "accountScopeCount": "Kumpulan akun: {{selected}}/{{total}}",
++        "accountScopeRequired": "Pilih setidaknya satu akun untuk kumpulan khusus",
++        "accountScopeModeInherit": "Warisi Kumpulan Layanan",
++        "accountScopeModeCustom": "Kumpulan Akun Kustom",
++        "accountPrioritySet": "Sematkan akun untuk routing prioritas",
++        "accountPriorityPromote": "Pindahkan akun ke prioritas tertinggi",
++        "accountPriorityClear": "Hapus sematan akun prioritas",
++        "accountPrioritySaved": "Akun prioritas disematkan",
++        "accountPriorityCleared": "Sematan akun prioritas dihapus",
++        "usageRange": "Periode penggunaan kunci API",
++        "unsaved": "Belum disimpan",
++        "resetPolicy": "Buang perubahan",
+         "modelPrefix": "Prefiks Model",
+         "modelPrefixPlaceholder": "Contoh: codex",
+         "allowedModels": "Model Diizinkan",
+diff --git a/src/locales/it.json b/src/locales/it.json
+index da675aee..9583452a 100644
+--- a/src/locales/it.json
++++ b/src/locales/it.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modelli e capacità",
+         "logs": "Statistiche e log"
+       },
++      "statsRange": {
++        "today": "Oggi",
++        "thisWeek": "Questa settimana",
++        "thisMonth": "Questo mese"
++      },
+       "healthTitle": "Stato servizio",
+       "compat": {
+         "title": "Compat. protocolli",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Criterio modelli",
+         "advancedPolicyTitle": "Avanzate: criterio modelli",
++        "accountScope": "Ambito rotazione account",
++        "accountScopeInherit": "Segui automaticamente il pool di account del servizio",
++        "accountScopeFixed": "Questa chiave è vincolata al relativo account e non può ereditare il pool del servizio",
++        "accountScopeSelected": "{{count}} account selezionati",
++        "accountScopeInheritedCount": "Pool account: ereditati {{count}}",
++        "accountScopeUnavailable": "Pool account: nessun account disponibile",
++        "accountScopeCount": "Pool account: {{selected}}/{{total}}",
++        "accountScopeRequired": "Seleziona almeno un account per un pool personalizzato",
++        "accountScopeModeInherit": "Eredita pool del servizio",
++        "accountScopeModeCustom": "Pool account personalizzato",
++        "accountPrioritySet": "Fissa l’account per il routing prioritario",
++        "accountPriorityPromote": "Sposta l’account alla priorità massima",
++        "accountPriorityClear": "Rimuovi il pin dell’account prioritario",
++        "accountPrioritySaved": "Account prioritario fissato",
++        "accountPriorityCleared": "Pin dell’account prioritario rimosso",
++        "usageRange": "Periodo di utilizzo della chiave API",
++        "unsaved": "Non salvato",
++        "resetPolicy": "Scarta modifiche",
+         "modelPrefix": "Prefisso modello",
+         "modelPrefixPlaceholder": "Esempio: codex",
+         "allowedModels": "Modelli ammessi",
+diff --git a/src/locales/ja.json b/src/locales/ja.json
+index 28f6a7f7..3da6cfb0 100644
+--- a/src/locales/ja.json
++++ b/src/locales/ja.json
+@@ -3200,6 +3200,11 @@
+         "models": "モデルと機能",
+         "logs": "統計とログ"
+       },
++      "statsRange": {
++        "today": "今日",
++        "thisWeek": "今週",
++        "thisMonth": "今月"
++      },
+       "healthTitle": "サービス状態",
+       "compat": {
+         "title": "プロトコル互換",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "モデルポリシー",
+         "advancedPolicyTitle": "詳細機能：モデルポリシー",
++        "accountScope": "アカウントローテーション範囲",
++        "accountScopeInherit": "サービスのアカウントプールを自動的に継承",
++        "accountScopeFixed": "この Key は紐付けられたアカウントに固定され、サービスプールを継承できません",
++        "accountScopeSelected": "{{count}} 個のアカウントを選択中",
++        "accountScopeInheritedCount": "アカウントプール: {{count}} 個を継承",
++        "accountScopeUnavailable": "アカウントプール: 利用可能なアカウントなし",
++        "accountScopeCount": "アカウントプール: {{selected}}/{{total}}",
++        "accountScopeRequired": "カスタムプールには少なくとも 1 個のアカウントを選択してください",
++        "accountScopeModeInherit": "サービスプールを継承",
++        "accountScopeModeCustom": "カスタムアカウントプール",
++        "accountPrioritySet": "優先ルーティング用にアカウントを固定",
++        "accountPriorityPromote": "アカウントを最優先に移動",
++        "accountPriorityClear": "優先アカウントの固定を解除",
++        "accountPrioritySaved": "優先アカウントを固定しました",
++        "accountPriorityCleared": "優先アカウントの固定を解除しました",
++        "usageRange": "API キーの使用期間",
++        "unsaved": "未保存",
++        "resetPolicy": "変更を破棄",
+         "modelPrefix": "モデル接頭辞",
+         "modelPrefixPlaceholder": "例: codex",
+         "allowedModels": "許可モデル",
+diff --git a/src/locales/ko.json b/src/locales/ko.json
+index 83d7db94..73221839 100644
+--- a/src/locales/ko.json
++++ b/src/locales/ko.json
+@@ -3200,6 +3200,11 @@
+         "models": "모델 및 기능",
+         "logs": "통계 및 로그"
+       },
++      "statsRange": {
++        "today": "오늘",
++        "thisWeek": "이번 주",
++        "thisMonth": "이번 달"
++      },
+       "healthTitle": "서비스 상태",
+       "compat": {
+         "title": "프로토콜 호환",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "모델 정책",
+         "advancedPolicyTitle": "고급 기능: 모델 정책",
++        "accountScope": "계정 순환 범위",
++        "accountScopeInherit": "서비스 계정 풀 자동 따르기",
++        "accountScopeFixed": "이 Key는 연결된 계정에 고정되어 서비스 풀을 상속할 수 없습니다",
++        "accountScopeSelected": "계정 {{count}}개 선택됨",
++        "accountScopeInheritedCount": "계정 풀: {{count}}개 상속",
++        "accountScopeUnavailable": "계정 풀: 사용 가능한 계정 없음",
++        "accountScopeCount": "계정 풀: {{selected}}/{{total}}",
++        "accountScopeRequired": "사용자 지정 풀에 계정을 하나 이상 선택하세요",
++        "accountScopeModeInherit": "서비스 풀 상속",
++        "accountScopeModeCustom": "사용자 지정 계정 풀",
++        "accountPrioritySet": "우선 라우팅 계정 고정",
++        "accountPriorityPromote": "계정을 최우선으로 이동",
++        "accountPriorityClear": "우선 계정 고정 해제",
++        "accountPrioritySaved": "우선 계정이 고정됨",
++        "accountPriorityCleared": "우선 계정 고정이 해제됨",
++        "usageRange": "API 키 사용 기간",
++        "unsaved": "저장되지 않음",
++        "resetPolicy": "변경 사항 취소",
+         "modelPrefix": "모델 접두사",
+         "modelPrefixPlaceholder": "예: codex",
+         "allowedModels": "허용 모델",
+diff --git a/src/locales/pl.json b/src/locales/pl.json
+index ac40defa..7e3292d8 100644
+--- a/src/locales/pl.json
++++ b/src/locales/pl.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modele i możliwości",
+         "logs": "Statystyki i dzienniki"
+       },
++      "statsRange": {
++        "today": "Dziś",
++        "thisWeek": "W tym tygodniu",
++        "thisMonth": "W tym miesiącu"
++      },
+       "healthTitle": "Kondycja usługi",
+       "compat": {
+         "title": "Zgodność protokołów",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Polityka modeli",
+         "advancedPolicyTitle": "Zaawansowane: polityka modeli",
++        "accountScope": "Zakres rotacji kont",
++        "accountScopeInherit": "Automatycznie używaj puli kont usługi",
++        "accountScopeFixed": "Ten Key jest przypisany do swojego konta i nie może dziedziczyć puli usługi",
++        "accountScopeSelected": "Wybrano {{count}} kont",
++        "accountScopeInheritedCount": "Pula kont: dziedziczenie {{count}}",
++        "accountScopeUnavailable": "Pula kont: brak dostępnych kont",
++        "accountScopeCount": "Pula kont: {{selected}}/{{total}}",
++        "accountScopeRequired": "Wybierz co najmniej jedno konto dla niestandardowej puli",
++        "accountScopeModeInherit": "Dziedzicz pulę usługi",
++        "accountScopeModeCustom": "Niestandardowa pula kont",
++        "accountPrioritySet": "Przypnij konto do routingu priorytetowego",
++        "accountPriorityPromote": "Przenieś konto na najwyższy priorytet",
++        "accountPriorityClear": "Odepnij konto priorytetowe",
++        "accountPrioritySaved": "Konto priorytetowe przypięte",
++        "accountPriorityCleared": "Odpięto konto priorytetowe",
++        "usageRange": "Okres użycia klucza API",
++        "unsaved": "Niezapisane",
++        "resetPolicy": "Odrzuć zmiany",
+         "modelPrefix": "Prefiks modelu",
+         "modelPrefixPlaceholder": "Przykład: codex",
+         "allowedModels": "Dozwolone modele",
+diff --git a/src/locales/pt-br.json b/src/locales/pt-br.json
+index 3780ac27..477f6df9 100644
+--- a/src/locales/pt-br.json
++++ b/src/locales/pt-br.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modelos e capacidades",
+         "logs": "Estatísticas e logs"
+       },
++      "statsRange": {
++        "today": "Hoje",
++        "thisWeek": "Esta semana",
++        "thisMonth": "Este mês"
++      },
+       "healthTitle": "Saúde do serviço",
+       "compat": {
+         "title": "Compat. de protocolos",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Política de modelos",
+         "advancedPolicyTitle": "Avançado: política de modelos",
++        "accountScope": "Escopo de rotação de contas",
++        "accountScopeInherit": "Seguir automaticamente o pool de contas do serviço",
++        "accountScopeFixed": "Esta Key está vinculada à conta associada e não pode herdar o pool do serviço",
++        "accountScopeSelected": "{{count}} contas selecionadas",
++        "accountScopeInheritedCount": "Pool de contas: herdando {{count}}",
++        "accountScopeUnavailable": "Pool de contas: nenhuma conta disponível",
++        "accountScopeCount": "Pool de contas: {{selected}}/{{total}}",
++        "accountScopeRequired": "Selecione pelo menos uma conta para um pool personalizado",
++        "accountScopeModeInherit": "Herdar pool do serviço",
++        "accountScopeModeCustom": "Pool de contas personalizado",
++        "accountPrioritySet": "Fixar conta para roteamento prioritário",
++        "accountPriorityPromote": "Mover conta para a prioridade máxima",
++        "accountPriorityClear": "Remover fixação da conta prioritária",
++        "accountPrioritySaved": "Conta prioritária fixada",
++        "accountPriorityCleared": "Fixação da conta prioritária removida",
++        "usageRange": "Período de uso da chave API",
++        "unsaved": "Não salvo",
++        "resetPolicy": "Descartar alterações",
+         "modelPrefix": "Prefixo do modelo",
+         "modelPrefixPlaceholder": "Exemplo: codex",
+         "allowedModels": "Modelos permitidos",
+diff --git a/src/locales/ru.json b/src/locales/ru.json
+index fdb63996..2c0d7c6e 100644
+--- a/src/locales/ru.json
++++ b/src/locales/ru.json
+@@ -3200,6 +3200,11 @@
+         "models": "Модели и возможности",
+         "logs": "Статистика и журналы"
+       },
++      "statsRange": {
++        "today": "Сегодня",
++        "thisWeek": "На этой неделе",
++        "thisMonth": "В этом месяце"
++      },
+       "healthTitle": "Состояние сервиса",
+       "compat": {
+         "title": "Совм. протоколов",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Политика моделей",
+         "advancedPolicyTitle": "Дополнительно: политика моделей",
++        "accountScope": "Область ротации аккаунтов",
++        "accountScopeInherit": "Автоматически использовать пул аккаунтов сервиса",
++        "accountScopeFixed": "Этот Key привязан к своему аккаунту и не может наследовать пул сервиса",
++        "accountScopeSelected": "Выбрано аккаунтов: {{count}}",
++        "accountScopeInheritedCount": "Пул аккаунтов: наследуется {{count}}",
++        "accountScopeUnavailable": "Пул аккаунтов: нет доступных аккаунтов",
++        "accountScopeCount": "Пул аккаунтов: {{selected}}/{{total}}",
++        "accountScopeRequired": "Выберите хотя бы один аккаунт для собственного пула",
++        "accountScopeModeInherit": "Наследовать пул сервиса",
++        "accountScopeModeCustom": "Собственный пул аккаунтов",
++        "accountPrioritySet": "Закрепить аккаунт для приоритетной маршрутизации",
++        "accountPriorityPromote": "Переместить аккаунт на высший приоритет",
++        "accountPriorityClear": "Открепить приоритетный аккаунт",
++        "accountPrioritySaved": "Приоритетный аккаунт закреплён",
++        "accountPriorityCleared": "Закрепление приоритетного аккаунта снято",
++        "usageRange": "Период использования API-ключа",
++        "unsaved": "Не сохранено",
++        "resetPolicy": "Отменить изменения",
+         "modelPrefix": "Префикс модели",
+         "modelPrefixPlaceholder": "Например: codex",
+         "allowedModels": "Разрешенные модели",
+diff --git a/src/locales/tr.json b/src/locales/tr.json
+index 50f0c027..3836ff9a 100644
+--- a/src/locales/tr.json
++++ b/src/locales/tr.json
+@@ -3200,6 +3200,11 @@
+         "models": "Modeller ve yetenekler",
+         "logs": "İstatistik ve günlükler"
+       },
++      "statsRange": {
++        "today": "Bugün",
++        "thisWeek": "Bu hafta",
++        "thisMonth": "Bu ay"
++      },
+       "healthTitle": "Hizmet durumu",
+       "compat": {
+         "title": "Protokol Uyumu",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Model ilkesi",
+         "advancedPolicyTitle": "Gelişmiş: model ilkesi",
++        "accountScope": "Hesap döndürme kapsamı",
++        "accountScopeInherit": "Hizmet hesap havuzunu otomatik olarak izle",
++        "accountScopeFixed": "Bu Key bağlı hesabına sabitlenmiştir ve hizmet havuzunu devralamaz",
++        "accountScopeSelected": "{{count}} hesap seçildi",
++        "accountScopeInheritedCount": "Hesap havuzu: {{count}} devralınıyor",
++        "accountScopeUnavailable": "Hesap havuzu: kullanılabilir hesap yok",
++        "accountScopeCount": "Hesap havuzu: {{selected}}/{{total}}",
++        "accountScopeRequired": "Özel havuz için en az bir hesap seçin",
++        "accountScopeModeInherit": "Hizmet havuzunu devral",
++        "accountScopeModeCustom": "Özel hesap havuzu",
++        "accountPrioritySet": "Öncelikli yönlendirme için hesabı sabitle",
++        "accountPriorityPromote": "Hesabı en yüksek önceliğe taşı",
++        "accountPriorityClear": "Öncelikli hesap sabitlemesini kaldır",
++        "accountPrioritySaved": "Öncelikli hesap sabitlendi",
++        "accountPriorityCleared": "Öncelikli hesap sabitlemesi kaldırıldı",
++        "usageRange": "API anahtarı kullanım dönemi",
++        "unsaved": "Kaydedilmedi",
++        "resetPolicy": "Değişiklikleri at",
+         "modelPrefix": "Model ön eki",
+         "modelPrefixPlaceholder": "Örnek: codex",
+         "allowedModels": "İzinli modeller",
+diff --git a/src/locales/vi.json b/src/locales/vi.json
+index 58119867..1c5e4d04 100644
+--- a/src/locales/vi.json
++++ b/src/locales/vi.json
+@@ -3200,6 +3200,11 @@
+         "models": "Mô hình và năng lực",
+         "logs": "Thống kê và nhật ký"
+       },
++      "statsRange": {
++        "today": "Hôm nay",
++        "thisWeek": "Tuần này",
++        "thisMonth": "Tháng này"
++      },
+       "healthTitle": "Sức khỏe dịch vụ",
+       "compat": {
+         "title": "Tương thích giao thức",
+@@ -3277,6 +3282,24 @@
+       "keys": {
+         "policyTitle": "Chính sách mô hình",
+         "advancedPolicyTitle": "Nâng cao: chính sách mô hình",
++        "accountScope": "Phạm vi xoay vòng tài khoản",
++        "accountScopeInherit": "Tự động theo nhóm tài khoản dịch vụ",
++        "accountScopeFixed": "Key này được cố định với tài khoản liên kết và không thể kế thừa nhóm dịch vụ",
++        "accountScopeSelected": "Đã chọn {{count}} tài khoản",
++        "accountScopeInheritedCount": "Nhóm tài khoản: kế thừa {{count}}",
++        "accountScopeUnavailable": "Nhóm tài khoản: không có tài khoản khả dụng",
++        "accountScopeCount": "Nhóm tài khoản: {{selected}}/{{total}}",
++        "accountScopeRequired": "Chọn ít nhất một tài khoản cho nhóm tùy chỉnh",
++        "accountScopeModeInherit": "Kế thừa nhóm dịch vụ",
++        "accountScopeModeCustom": "Nhóm tài khoản tùy chỉnh",
++        "accountPrioritySet": "Ghim tài khoản để định tuyến ưu tiên",
++        "accountPriorityPromote": "Đưa tài khoản lên ưu tiên cao nhất",
++        "accountPriorityClear": "Bỏ ghim tài khoản ưu tiên",
++        "accountPrioritySaved": "Đã ghim tài khoản ưu tiên",
++        "accountPriorityCleared": "Đã bỏ ghim tài khoản ưu tiên",
++        "usageRange": "Thời gian sử dụng khóa API",
++        "unsaved": "Chưa lưu",
++        "resetPolicy": "Hủy thay đổi",
+         "modelPrefix": "Tiền tố mô hình",
+         "modelPrefixPlaceholder": "Ví dụ: codex",
+         "allowedModels": "Mô hình được phép",
+diff --git a/src/locales/zh-tw.json b/src/locales/zh-tw.json
+index 06610e36..14e23f04 100644
+--- a/src/locales/zh-tw.json
++++ b/src/locales/zh-tw.json
+@@ -3292,6 +3292,11 @@
+         "accountScopeRequired": "自訂帳號池至少需要選擇 1 個帳號",
+         "accountScopeModeInherit": "繼承服務池",
+         "accountScopeModeCustom": "自訂帳號池",
++        "accountPrioritySet": "置頂帳號優先調度",
++        "accountPriorityPromote": "移至最高優先級",
++        "accountPriorityClear": "取消帳號置頂",
++        "accountPrioritySaved": "帳號已置頂",
++        "accountPriorityCleared": "已取消帳號置頂",
+         "usageRange": "Key 用量統計週期",
+         "unsaved": "尚未儲存",
+         "resetPolicy": "撤銷修改",
+-- 
+2.49.0.windows.1
+
