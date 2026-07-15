@@ -27,7 +27,7 @@ import (
 const codexResponsesLiteHeader = "X-OpenAI-Internal-Codex-Responses-Lite"
 
 func normalizeResponsesLiteRequest(rawJSON []byte, enabled bool) []byte {
-	if !enabled && !registry.CodexClientModelUsesResponsesLite(gjson.GetBytes(rawJSON, "model").String()) {
+	if !enabled {
 		return rawJSON
 	}
 	updated, err := sjson.SetBytes(rawJSON, "parallel_tool_calls", false)
