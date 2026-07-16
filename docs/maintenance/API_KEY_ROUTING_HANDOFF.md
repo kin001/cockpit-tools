@@ -841,9 +841,34 @@ time: 2026-07-16 10:13:05 +08:00
 sha256: 53FD4EFE64B6B3A8629D66899D655F4A69C8A12EECF2269EDBEC604315BE9193
 ```
 
-The package was built but not installed during this sync. The running installed
-application remains official/custom 1.3.4 with the prior sidecar, so merely
-restarting it does not activate the 1.3.5 Lite fixes.
+The package was installed silently and restarted on 2026-07-16. Before the
+installation, the 100-file 1.3.4 program directory was copied to:
+
+```text
+target/install-backups/pre-1.3.5-sync-20260716-103901
+```
+
+Installation and runtime verification:
+
+- NSIS silent installer exit code: `0`.
+- Installed product version: `1.3.5`.
+- Installed application SHA-256:
+  `186E6DB8CF841F57E200E65772C9953E788020A36E62D24D577344F2A75BA060`.
+- Installed sidecar SHA-256:
+  `53FD4EFE64B6B3A8629D66899D655F4A69C8A12EECF2269EDBEC604315BE9193`.
+- Restarted application process ID: `56160`; sidecar process ID: `9328`.
+- API sidecar port `54548`: listening.
+- Unauthenticated `GET /v1/models`: HTTP `401`, confirming that the service is
+  reachable and still enforces authentication.
+- The desktop window loaded the Codex API Service overview and reported the
+  service running with all seven configured accounts available.
+- The saved API service speed was already `standard` before installation
+  (`codex_api_service_speed.json` timestamp 2026-07-15 18:30:56). The restarted
+  sidecar therefore correctly has no default `priority` payload. The installer
+  did not reset this preference.
+
+Account data under `%USERPROFILE%\.antigravity_cockpit` remained separate from
+the program-directory backup and was not deleted or replaced.
 
 Do not use the in-app official updater while PR #1587 is absent from the target
 release if the hot-reload and accurate-window corrections must be retained. The
