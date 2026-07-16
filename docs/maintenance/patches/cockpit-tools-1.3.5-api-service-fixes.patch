@@ -1,0 +1,618 @@
+diff --git a/src-tauri/src/modules/codex_local_access.rs b/src-tauri/src/modules/codex_local_access.rs
+index 448c604a..7e78953a 100644
+--- a/src-tauri/src/modules/codex_local_access.rs
++++ b/src-tauri/src/modules/codex_local_access.rs
+@@ -6434,6 +6434,13 @@ fn open_local_access_logs_db_once(
+         "request_kind",
+         "request_kind TEXT NOT NULL DEFAULT 'other'",
+     )?;
++    if include_service_tier_column {
++        ensure_request_logs_column(
++            &conn,
++            "service_tier",
++            "service_tier TEXT NOT NULL DEFAULT ''",
++        )?;
++    }
+     ensure_request_logs_column(&conn, "success", "success INTEGER NOT NULL DEFAULT 0")?;
+     ensure_request_logs_column(&conn, "http_status", "http_status INTEGER")?;
+     ensure_request_logs_column(
+@@ -9001,14 +9008,28 @@ fn build_lan_base_url(port: u16) -> Option<String> {
+ }
+ 
+ fn sidecar_config_fingerprint(config_content: &str, manifest_content: &str) -> String {
++    let stable_config_content = stable_sidecar_config_for_fingerprint(config_content);
+     let stable_manifest_content = stable_sidecar_manifest_for_fingerprint(manifest_content);
+     let mut hasher = Sha1::new();
+-    hasher.update(config_content.as_bytes());
++    hasher.update(stable_config_content.as_bytes());
+     hasher.update(b"\n--manifest--\n");
+     hasher.update(stable_manifest_content.as_bytes());
+     format!("{:x}", hasher.finalize())
+ }
+ 
++fn stable_sidecar_config_for_fingerprint(config_content: &str) -> String {
++    let Ok(mut config) = serde_json::from_str::<Value>(config_content) else {
++        return config_content.to_string();
++    };
++    if let Some(config) = config.as_object_mut() {
++        // CLIProxyAPI watches the config file and applies payload defaults to new
++        // requests. Excluding this hot-reloadable field keeps active streams alive
++        // when the API service speed changes.
++        config.remove("payload");
++    }
++    serde_json::to_string(&config).unwrap_or_else(|_| config_content.to_string())
++}
++
+ fn stable_sidecar_manifest_for_fingerprint(manifest_content: &str) -> String {
+     let Ok(mut manifest) = serde_json::from_str::<Value>(manifest_content) else {
+         return manifest_content.to_string();
+@@ -24624,6 +24645,31 @@ wire_api = "responses"
+         );
+     }
+ 
++    #[test]
++    fn sidecar_fingerprint_ignores_hot_reloadable_payload_defaults() {
++        let manifest = r#"{"accounts":[],"routingStrategy":"auto"}"#;
++        let standard = r#"{"host":"127.0.0.1","port":58393}"#;
++        let priority = r#"{
++          "host": "127.0.0.1",
++          "port": 58393,
++          "payload": {"default":[{"models":[{"name":"gpt-*","protocol":"openai/responses"}],"params":{"service_tier":"priority"}}]}
++        }"#;
++        let other_port = r#"{
++          "host": "127.0.0.1",
++          "port": 58394,
++          "payload": {"default":[{"models":[{"name":"gpt-*","protocol":"openai/responses"}],"params":{"service_tier":"priority"}}]}
++        }"#;
++
++        assert_eq!(
++            sidecar_config_fingerprint(standard, manifest),
++            sidecar_config_fingerprint(priority, manifest),
++        );
++        assert_ne!(
++            sidecar_config_fingerprint(priority, manifest),
++            sidecar_config_fingerprint(other_port, manifest),
++        );
++    }
++
+     #[test]
+     fn sidecar_fingerprint_ignores_dynamic_quota_snapshot_changes() {
+         let config = r#"{"host":"127.0.0.1","port":58393}"#;
+@@ -25667,6 +25713,40 @@ wire_api = "responses"
+         let _ = fs::remove_dir_all(dir);
+     }
+ 
++    #[test]
++    fn request_log_db_adds_service_tier_to_existing_schema() {
++        let dir = make_temp_dir("codex-local-access-service-tier-migration");
++        let db_path = dir.join("request_logs.sqlite");
++        let conn = open_local_access_logs_db_once(&db_path, false).expect("open legacy logs db");
++        conn.execute(
++            "INSERT INTO request_logs (event_key, timestamp, request_id) VALUES (?1, ?2, ?3)",
++            rusqlite::params!["legacy-event", 1_700_000_000_000_i64, "legacy-request"],
++        )
++        .expect("insert legacy request log");
++        let legacy_column_count: i64 = conn
++            .query_row(
++                "SELECT COUNT(*) FROM pragma_table_info('request_logs') WHERE name = 'service_tier'",
++                [],
++                |row| row.get(0),
++            )
++            .expect("inspect legacy schema");
++        assert_eq!(legacy_column_count, 0);
++        drop(conn);
++
++        let conn = open_local_access_logs_db_once(&db_path, true).expect("migrate logs db");
++        let migrated: (String, String) = conn
++            .query_row(
++                "SELECT request_id, service_tier FROM request_logs WHERE event_key = ?1",
++                ["legacy-event"],
++                |row| Ok((row.get(0)?, row.get(1)?)),
++            )
++            .expect("read migrated request log");
++        assert_eq!(migrated, ("legacy-request".to_string(), String::new()));
++
++        drop(conn);
++        let _ = fs::remove_dir_all(dir);
++    }
++
+     #[test]
+     fn request_log_reprice_updates_cost_and_pricing_version() {
+         let dir = make_temp_dir("codex-local-access-reprice");
+diff --git a/src/components/CodexLocalAccessModal.tsx b/src/components/CodexLocalAccessModal.tsx
+index 3d1c6e37..83f10946 100644
+--- a/src/components/CodexLocalAccessModal.tsx
++++ b/src/components/CodexLocalAccessModal.tsx
+@@ -56,6 +56,7 @@ import {
+ } from "../utils/codexAccountOverview";
+ import {
+   formatCodexQuotaPoolPercent,
++  formatCodexQuotaPoolWindowLabel,
+   summarizeCodexQuotaPool,
+   type CodexQuotaPoolItem,
+ } from "../utils/codexQuotaPool";
+@@ -286,10 +287,15 @@ function createTestChatMessage(
+ function formatQuotaPoolLabel(
+   baseLabel: string,
+   pool: CodexQuotaPoolItem,
+-  hourlyLabel: string,
+   weeklyLabel: string,
+ ): string {
+-  return `${baseLabel} · ${hourlyLabel} ${formatCodexQuotaPoolPercent(pool.hourly)} · ${weeklyLabel} ${formatCodexQuotaPoolPercent(pool.weekly)}`;
++  const quotaText = pool.windows
++    .map(
++      (window) =>
++        `${formatCodexQuotaPoolWindowLabel(window.label, weeklyLabel)} ${formatCodexQuotaPoolPercent(window.percentage)}`,
++    )
++    .join(" · ");
++  return quotaText ? `${baseLabel} · ${quotaText}` : baseLabel;
+ }
+ 
+ function summarizeQuotaPoolsByPlan(
+@@ -431,7 +437,6 @@ export function CodexLocalAccessModal({
+   const stats = state?.stats;
+   const quotaPoolLabels = useMemo(
+     () => ({
+-      hourly: t("codex.localAccess.quotaPool.hourlyShort", "5h"),
+       weekly: t("codex.localAccess.quotaPool.weeklyShort", "周"),
+       title: t("codex.localAccess.quotaPool.title", "额度池"),
+     }),
+@@ -815,11 +820,9 @@ export function CodexLocalAccessModal({
+       formatQuotaPoolLabel(
+         t("common.shared.filter.all", { count: tierCounts.all }),
+         quotaPoolSummary.all,
+-        quotaPoolLabels.hourly,
+         quotaPoolLabels.weekly,
+       ),
+     [
+-      quotaPoolLabels.hourly,
+       quotaPoolLabels.weekly,
+       quotaPoolSummary.all,
+       t,
+@@ -841,13 +844,11 @@ export function CodexLocalAccessModal({
+           label: formatQuotaPoolLabel(
+             option.label,
+             pool,
+-            quotaPoolLabels.hourly,
+             quotaPoolLabels.weekly,
+           ),
+         };
+       }),
+     [
+-      quotaPoolLabels.hourly,
+       quotaPoolLabels.weekly,
+       quotaPoolByPlan,
+       t,
+@@ -1259,13 +1260,11 @@ export function CodexLocalAccessModal({
+       formatQuotaPoolLabel(
+         t("common.shared.filter.all", { count: customRoutingTierCounts.all }),
+         customRoutingQuotaPoolSummary.all,
+-        quotaPoolLabels.hourly,
+         quotaPoolLabels.weekly,
+       ),
+     [
+       customRoutingQuotaPoolSummary.all,
+       customRoutingTierCounts.all,
+-      quotaPoolLabels.hourly,
+       quotaPoolLabels.weekly,
+       t,
+     ],
+@@ -1288,7 +1287,6 @@ export function CodexLocalAccessModal({
+           label: formatQuotaPoolLabel(
+             option.label,
+             pool,
+-            quotaPoolLabels.hourly,
+             quotaPoolLabels.weekly,
+           ),
+         };
+@@ -1296,7 +1294,6 @@ export function CodexLocalAccessModal({
+     [
+       customRoutingQuotaPoolByPlan,
+       customRoutingTierCounts,
+-      quotaPoolLabels.hourly,
+       quotaPoolLabels.weekly,
+       t,
+     ],
+@@ -2385,14 +2382,18 @@ export function CodexLocalAccessModal({
+                         <span className="codex-local-access-quota-pool-plan">
+                           {item.key} ({item.count})
+                         </span>
+-                        <span className="codex-local-access-quota-pool-value">
+-                          {quotaPoolLabels.hourly}{" "}
+-                          {formatCodexQuotaPoolPercent(item.hourly)}
+-                        </span>
+-                        <span className="codex-local-access-quota-pool-value">
+-                          {quotaPoolLabels.weekly}{" "}
+-                          {formatCodexQuotaPoolPercent(item.weekly)}
+-                        </span>
++                        {item.windows.map((window) => (
++                          <span
++                            key={window.key}
++                            className="codex-local-access-quota-pool-value"
++                          >
++                            {formatCodexQuotaPoolWindowLabel(
++                              window.label,
++                              quotaPoolLabels.weekly,
++                            )}{" "}
++                            {formatCodexQuotaPoolPercent(window.percentage)}
++                          </span>
++                        ))}
+                       </div>
+                     ))}
+                   </div>
+diff --git a/src/pages/CodexAccountsPage.tsx b/src/pages/CodexAccountsPage.tsx
+index 58828456..a672ce44 100644
+--- a/src/pages/CodexAccountsPage.tsx
++++ b/src/pages/CodexAccountsPage.tsx
+@@ -240,6 +240,7 @@ import {
+ import { resolveCodexProviderCapabilityProfile } from "../utils/codexProviderGateway";
+ import {
+   formatCodexQuotaPoolPercent,
++  formatCodexQuotaPoolWindowLabel,
+   summarizeCodexQuotaPool,
+ } from "../utils/codexQuotaPool";
+ import {
+@@ -8548,7 +8549,6 @@ export function CodexAccountsPage() {
+     localAccessAccountPoolHealthSummary.cooldown > 0;
+   const localAccessQuotaPoolLabels = useMemo(
+     () => ({
+-      hourly: t("codex.localAccess.quotaPool.hourlyShort", "5h"),
+       weekly: t("codex.localAccess.quotaPool.weeklyShort", "周"),
+       title: t("codex.localAccess.quotaPool.title", "额度池"),
+     }),
+@@ -11347,14 +11347,15 @@ export function CodexAccountsPage() {
+                     <strong>
+                       {item.key} ({item.count})
+                     </strong>
+-                    <span>
+-                      {localAccessQuotaPoolLabels.hourly}{" "}
+-                      {formatCodexQuotaPoolPercent(item.hourly)}
+-                    </span>
+-                    <span>
+-                      {localAccessQuotaPoolLabels.weekly}{" "}
+-                      {formatCodexQuotaPoolPercent(item.weekly)}
+-                    </span>
++                    {item.windows.map((window) => (
++                      <span key={window.key}>
++                        {formatCodexQuotaPoolWindowLabel(
++                          window.label,
++                          localAccessQuotaPoolLabels.weekly,
++                        )}{" "}
++                        {formatCodexQuotaPoolPercent(window.percentage)}
++                      </span>
++                    ))}
+                   </div>
+                 ))}
+                 {localAccessQuotaHiddenCount > 0 && (
+@@ -16900,18 +16901,19 @@ export function CodexAccountsPage() {
+                             </strong>
+                           </div>
+                           <div className="codex-local-access-stats-values">
+-                            <span>
+-                              <b>{localAccessQuotaPoolLabels.hourly}</b>
+-                              <strong>
+-                                {formatCodexQuotaPoolPercent(item.hourly)}
+-                              </strong>
+-                            </span>
+-                            <span>
+-                              <b>{localAccessQuotaPoolLabels.weekly}</b>
+-                              <strong>
+-                                {formatCodexQuotaPoolPercent(item.weekly)}
+-                              </strong>
+-                            </span>
++                            {item.windows.map((window) => (
++                              <span key={window.key}>
++                                <b>
++                                  {formatCodexQuotaPoolWindowLabel(
++                                    window.label,
++                                    localAccessQuotaPoolLabels.weekly,
++                                  )}
++                                </b>
++                                <strong>
++                                  {formatCodexQuotaPoolPercent(window.percentage)}
++                                </strong>
++                              </span>
++                            ))}
+                           </div>
+                         </div>
+                       ))}
+diff --git a/src/pages/CodexApiServicePage.tsx b/src/pages/CodexApiServicePage.tsx
+index 58cd48a7..1a938089 100644
+--- a/src/pages/CodexApiServicePage.tsx
++++ b/src/pages/CodexApiServicePage.tsx
+@@ -88,6 +88,7 @@ import type {
+ import { buildCodexAccountPresentation } from "../presentation/platformAccountPresentation";
+ import {
+   formatCodexQuotaPoolPercent,
++  formatCodexQuotaPoolWindowLabel,
+   summarizeCodexQuotaPool,
+ } from "../utils/codexQuotaPool";
+ import { filterCodexLocalAccessAccountIds } from "../utils/codexLocalAccessAccounts";
+@@ -3569,10 +3570,18 @@ export function CodexApiServicePage() {
+                 ) : (
+                   quotaPoolSummary.visiblePlans.map((item) => (
+                     <span key={item.key}>
+-                      {item.key} ({item.count}) · 5h{" "}
+-                      {formatCodexQuotaPoolPercent(item.hourly)} ·{" "}
+-                      {t("codex.localAccess.quotaPool.weeklyShort", "周")}{" "}
+-                      {formatCodexQuotaPoolPercent(item.weekly)}
++                      {item.key} ({item.count})
++                      {item.windows.length > 0
++                        ? ` · ${item.windows
++                            .map(
++                              (window) =>
++                                `${formatCodexQuotaPoolWindowLabel(
++                                  window.label,
++                                  t("codex.localAccess.quotaPool.weeklyShort", "周"),
++                                )} ${formatCodexQuotaPoolPercent(window.percentage)}`,
++                            )
++                            .join(" · ")}`
++                        : ""}
+                     </span>
+                   ))
+                 )}
+diff --git a/src/utils/codexQuotaPool.test.ts b/src/utils/codexQuotaPool.test.ts
+new file mode 100644
+index 00000000..b70e5062
+--- /dev/null
++++ b/src/utils/codexQuotaPool.test.ts
+@@ -0,0 +1,175 @@
++import assert from 'node:assert/strict';
++import test from 'node:test';
++
++import type { CodexAccount, CodexQuota } from '../types/codex.ts';
++import { summarizeCodexQuotaPool } from './codexQuotaPool.ts';
++
++function account(id: string, planType: string, quota?: CodexQuota): CodexAccount {
++  return {
++    id,
++    auth_mode: 'oauth',
++    plan_type: planType,
++    quota,
++  } as CodexAccount;
++}
++
++function quota(overrides: Partial<CodexQuota>): CodexQuota {
++  return {
++    hourly_percentage: 0,
++    weekly_percentage: 0,
++    ...overrides,
++  };
++}
++
++test('treats a weekly primary window as weekly instead of 5h', () => {
++  const summary = summarizeCodexQuotaPool([
++    account(
++      'plus-weekly-only',
++      'plus',
++      quota({
++        hourly_percentage: 73,
++        hourly_window_minutes: 10_080,
++        hourly_window_present: true,
++        weekly_window_present: false,
++      }),
++    ),
++  ]);
++
++  assert.deepEqual(summary.byPlan.PLUS.windows, [
++    {
++      key: 'weekly',
++      label: 'Weekly',
++      percentage: 73,
++      accountCount: 1,
++      windowMinutes: 10_080,
++    },
++  ]);
++});
++
++test('keeps legacy 5h and weekly windows when both are present', () => {
++  const summary = summarizeCodexQuotaPool([
++    account(
++      'legacy-pro',
++      'pro',
++      quota({
++        hourly_percentage: 80,
++        weekly_percentage: 45,
++        hourly_window_minutes: 300,
++        weekly_window_minutes: 10_080,
++        hourly_window_present: true,
++        weekly_window_present: true,
++      }),
++    ),
++  ]);
++
++  assert.deepEqual(
++    summary.byPlan.PRO.windows.map(({ label, percentage }) => ({ label, percentage })),
++    [
++      { label: '5h', percentage: 80 },
++      { label: 'Weekly', percentage: 45 },
++    ],
++  );
++});
++
++test('uses legacy labels when window metadata is unavailable', () => {
++  const summary = summarizeCodexQuotaPool([
++    account(
++      'legacy-api-key',
++      'api_key',
++      quota({ hourly_percentage: 60, weekly_percentage: 25 }),
++    ),
++  ]);
++
++  assert.deepEqual(
++    summary.byPlan.API_KEY.windows.map(({ label, percentage }) => ({ label, percentage })),
++    [
++      { label: '5h', percentage: 60 },
++      { label: 'Weekly', percentage: 25 },
++    ],
++  );
++});
++
++test('preserves a real zero-percent window and omits an account with no quota', () => {
++  const summary = summarizeCodexQuotaPool([
++    account(
++      'plus-exhausted',
++      'plus',
++      quota({
++        hourly_percentage: 0,
++        hourly_window_minutes: 10_080,
++        hourly_window_present: true,
++        weekly_window_present: false,
++      }),
++    ),
++    account('plus-missing', 'plus'),
++  ]);
++
++  assert.equal(summary.byPlan.PLUS.count, 2);
++  assert.deepEqual(
++    summary.byPlan.PLUS.windows.map(({ label, percentage, accountCount }) => ({
++      label,
++      percentage,
++      accountCount,
++    })),
++    [{ label: 'Weekly', percentage: 0, accountCount: 1 }],
++  );
++});
++
++test('merges equivalent weekly windows across mixed old and new accounts', () => {
++  const summary = summarizeCodexQuotaPool([
++    account(
++      'plus-legacy',
++      'plus',
++      quota({
++        hourly_percentage: 20,
++        weekly_percentage: 40,
++        hourly_window_minutes: 300,
++        weekly_window_minutes: 10_080,
++        hourly_window_present: true,
++        weekly_window_present: true,
++      }),
++    ),
++    account(
++      'plus-weekly-only',
++      'plus',
++      quota({
++        hourly_percentage: 30,
++        hourly_window_minutes: 10_080,
++        hourly_window_present: true,
++        weekly_window_present: false,
++      }),
++    ),
++  ]);
++
++  assert.deepEqual(
++    summary.byPlan.PLUS.windows.map(({ label, percentage, accountCount }) => ({
++      label,
++      percentage,
++      accountCount,
++    })),
++    [
++      { label: '5h', percentage: 20, accountCount: 1 },
++      { label: 'Weekly', percentage: 70, accountCount: 2 },
++    ],
++  );
++});
++
++test('does not invent 5h windows for weekly-only plus, pro, or API key plans', () => {
++  const accounts = ['plus', 'pro', 'api_key'].map((planType, index) =>
++    account(
++      `${planType}-${index}`,
++      planType,
++      quota({
++        hourly_percentage: 90 - index * 10,
++        hourly_window_minutes: 10_080,
++        hourly_window_present: true,
++        weekly_window_present: false,
++      }),
++    ),
++  );
++  const summary = summarizeCodexQuotaPool(accounts);
++
++  summary.visiblePlans.forEach((plan) => {
++    assert.deepEqual(plan.windows.map((window) => window.label), ['Weekly']);
++  });
++});
+diff --git a/src/utils/codexQuotaPool.ts b/src/utils/codexQuotaPool.ts
+index 60444d03..0dcfa2b6 100644
+--- a/src/utils/codexQuotaPool.ts
++++ b/src/utils/codexQuotaPool.ts
+@@ -1,15 +1,22 @@
+ import type { CodexAccount } from '../types/codex';
+ import {
+-  getCodexEffectiveQuotaPercentages,
+   getCodexPlanFilterKey,
++  getCodexQuotaWindows,
+ } from '../types/codex';
+ import { sortCodexPlanFilterKeys } from './codexAccountOverview';
+ 
++export interface CodexQuotaPoolWindow {
++  key: string;
++  label: string;
++  percentage: number;
++  accountCount: number;
++  windowMinutes: number;
++}
++
+ export interface CodexQuotaPoolItem {
+   key: string;
+   count: number;
+-  hourly: number;
+-  weekly: number;
++  windows: CodexQuotaPoolWindow[];
+ }
+ 
+ export interface CodexQuotaPoolSummary {
+@@ -19,14 +26,38 @@ export interface CodexQuotaPoolSummary {
+ }
+ 
+ function createQuotaPoolItem(key: CodexQuotaPoolItem['key']): CodexQuotaPoolItem {
+-  return { key, count: 0, hourly: 0, weekly: 0 };
++  return { key, count: 0, windows: [] };
+ }
+ 
+ function addAccountToQuotaPool(target: CodexQuotaPoolItem, account: CodexAccount): void {
+-  const percentages = getCodexEffectiveQuotaPercentages(account.quota);
+   target.count += 1;
+-  target.hourly += percentages.hourly ?? 0;
+-  target.weekly += percentages.weekly ?? 0;
++  const seenWindowKeys = new Set<string>();
++  getCodexQuotaWindows(account.quota).forEach((window) => {
++    const key = window.label.trim().toLowerCase();
++    const windowMinutes =
++      window.windowMinutes ?? (window.id === 'secondary' ? 7 * 24 * 60 : 5 * 60);
++    let pooledWindow = target.windows.find((item) => item.key === key);
++    if (!pooledWindow) {
++      pooledWindow = {
++        key,
++        label: window.label,
++        percentage: 0,
++        accountCount: 0,
++        windowMinutes,
++      };
++      target.windows.push(pooledWindow);
++    }
++    pooledWindow.percentage += window.percentage;
++    pooledWindow.windowMinutes = Math.min(pooledWindow.windowMinutes, windowMinutes);
++    if (!seenWindowKeys.has(key)) {
++      pooledWindow.accountCount += 1;
++      seenWindowKeys.add(key);
++    }
++  });
++  target.windows.sort(
++    (left, right) =>
++      left.windowMinutes - right.windowMinutes || left.label.localeCompare(right.label),
++  );
+ }
+ 
+ export function summarizeCodexQuotaPool(accounts: CodexAccount[]): CodexQuotaPoolSummary {
+@@ -52,3 +83,10 @@ export function summarizeCodexQuotaPool(accounts: CodexAccount[]): CodexQuotaPoo
+ export function formatCodexQuotaPoolPercent(value: number): string {
+   return `${Math.max(0, Math.round(value))}%`;
+ }
++
++export function formatCodexQuotaPoolWindowLabel(
++  label: string,
++  weeklyLabel: string,
++): string {
++  return label === 'Weekly' ? weeklyLabel : label;
++}

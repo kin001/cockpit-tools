@@ -594,6 +594,7 @@ target/install-backups/pre-1.3.3-lite-fix-20260715-122735
 To roll back, exit Cockpit Tools and restore that directory to
 `%LOCALAPPDATA%\Cockpit Tools`, or reinstall the previously retained 1.3.2
 installer. User configuration and account data were not deleted or replaced.
+
 ## PR #1577 Locale Check Repair
 
 On 2026-07-15, the first CI run for the Responses Lite compatibility PR failed
@@ -751,3 +752,111 @@ direction is:
 
 This deferred design must not be bundled into the fast-mode/quota-window bugfix
 commit or its pull request.
+
+## v1.3.5 Sync, Remaining Delta, and Updater Policy
+
+Sync and archive completed on 2026-07-16:
+
+- Pre-merge downstream HEAD: `b6bc7f5b`.
+- Official release tag: `v1.3.5` at `2c6412c0`.
+- Official head after the Homebrew update: `24617f5c`.
+- Backup branch:
+  `backup/pre-origin-main-1.3.5-sync-20260716-100132`.
+- Merge commit: `dca4239f` (`merge: sync upstream 1.3.5`).
+- The only textual conflict was this maintenance document. The resolution kept
+  the official PR #1577 record and the downstream v1.3.4 correction archive.
+- The untracked `docs/prototypes/` directory was not deleted or committed.
+
+Official 1.3.5 now includes the previously contributed Responses Lite fix from
+PR #1577, including Lite search forwarding, Responses WebSocket support, and
+hosted-tool filtering. Official 1.3.4 already included the core API Key account
+pool, ordered priority, per-Key usage statistics, calendar periods, and Spark
+support from PR #1470.
+
+The remaining functional downstream delta from `origin/main` is now limited to
+two correction groups:
+
+1. API service Standard/Fast changes hot-reload sidecar payload defaults without
+   restarting the process or interrupting active streams. Existing request-log
+   databases also migrate the `service_tier` column in place.
+2. Quota-pool UI components render the actual windows reported by each account,
+   so a weekly-only primary window is not mislabeled as `5h`.
+
+Those corrections are proposed upstream in PR #1587 but are not present in
+official head `24617f5c`. Maintenance-only differences also remain in this
+document and the recovery patches; they do not affect the packaged application.
+
+The focused recovery patch for the remaining code delta is:
+
+```text
+docs/maintenance/patches/cockpit-tools-1.3.5-api-service-fixes.patch
+```
+
+It is based on official head `24617f5c`. Preferred recovery remains fetching
+the complete maintained branch from the personal fork. To replay only the two
+correction groups, make the patch available in a checkout based on `24617f5c`
+and run:
+
+```powershell
+git apply --3way docs/maintenance/patches/cockpit-tools-1.3.5-api-service-fixes.patch
+```
+
+Verification after the merge:
+
+- `npm run typecheck`: passed, including the production build preflight.
+- `node scripts/check_locales.cjs`: passed; all 18 locale files contain 5,012
+  matching keys.
+- API Key account-scope tests: 5 passed.
+- Quota-window and quota-error tests: 9 passed.
+- API service compatibility tests: 2 passed.
+- Rust `codex_local_access` module: 186 passed.
+- Cockpit sidecar wrapper `go test ./...`: passed.
+- CLIProxyAPI watcher, executor, payload helper, OpenAI handler, and auth
+  classification packages: passed.
+- Release build completed with Go sidecar compilation enabled and
+  `src-tauri/tauri.ci.conf.json`; updater artifacts remained disabled because
+  no Tauri signing private key is configured.
+
+Release artifacts:
+
+```text
+target/release/bundle/nsis/Cockpit Tools_1.3.5_x64-setup.exe
+size: 28051709 bytes
+time: 2026-07-16 10:26:29 +08:00
+sha256: 6DED548F3EE0BF5FBC0EBEC126A8CFA3FEC326A9E2E0DB038ACCEA69A505AA66
+
+target/release/bundle/msi/Cockpit Tools_1.3.5_x64_en-US.msi
+size: 38191104 bytes
+time: 2026-07-16 10:25:34 +08:00
+sha256: 3CD973C23F767F991CB72819B4EC599DDFD6DBAB6BDEB9C564DBDB299DD5EE32
+
+target/release/cockpit-tools.exe
+size: 83884032 bytes
+time: 2026-07-16 10:25:19 +08:00
+sha256: 186E6DB8CF841F57E200E65772C9953E788020A36E62D24D577344F2A75BA060
+
+sidecars/cockpit-cliproxy/bin/cockpit-cliproxy-x86_64-pc-windows-msvc.exe
+size: 19633152 bytes
+time: 2026-07-16 10:13:05 +08:00
+sha256: 53FD4EFE64B6B3A8629D66899D655F4A69C8A12EECF2269EDBEC604315BE9193
+```
+
+The package was built but not installed during this sync. The running installed
+application remains official/custom 1.3.4 with the prior sidecar, so merely
+restarting it does not activate the 1.3.5 Lite fixes.
+
+Do not use the in-app official updater while PR #1587 is absent from the target
+release if the hot-reload and accurate-window corrections must be retained. The
+official updater replaces the application binaries with the official build,
+although account and API service data remain on disk. Continue using a locally
+merged package for releases until the official branch contains those remaining
+code changes. Once a released official version includes PR #1587 and the
+downstream diff contains only maintenance documentation or patches, normal
+in-app updates can replace this manual packaging workflow.
+
+The build emitted existing unused/dead-code warnings, a Vite chunk-size warning,
+and the known Tauri `__TAURI_BUNDLE_TYPE` patch warning. Both unsigned local
+installers were still produced successfully. After the build,
+`src-tauri/Cargo.toml` briefly appeared modified with no text diff; its worktree
+and index object hashes were identical, and refreshing the index cleared the
+status without changing file content.
