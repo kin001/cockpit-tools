@@ -594,7 +594,6 @@ target/install-backups/pre-1.3.3-lite-fix-20260715-122735
 To roll back, exit Cockpit Tools and restore that directory to
 `%LOCALAPPDATA%\Cockpit Tools`, or reinstall the previously retained 1.3.2
 installer. User configuration and account data were not deleted or replaced.
-
 ## PR #1577 Locale Check Repair
 
 On 2026-07-15, the first CI run for the Responses Lite compatibility PR failed
